@@ -46,35 +46,49 @@ class CitiesSerializer:
     '''
 
     def __init__(self, cities_data: list):
-        self._cities_object = [City(False,
-                                    latitude=city_data.get('coords').get('lat', 0),
-                                    longitude=city_data.get('coords').get('lon', 0),
-                                    name=city_data.get('name', ''),
-                                    population=city_data.get('population', 0),
-                                    subject=city_data.get('subject', ''),
-                                    district=city_data.get('district', '')) for city_data in cities_data]
+        self._cities_object = [City(
+            latitude=float(city_data.get('coords').get('lat', 0)),
+            longitude=float(city_data.get('coords').get('lon', 0)),
+            name=city_data.get('name', ''),
+            population=city_data.get('population', 0),
+            subject=city_data.get('subject', ''),
+            district=city_data.get('district', '')
+        ) for city_data in cities_data]
 
     def get_all_cities(self):
+        """
+        метод возврата списка обьектов городов
+        """
         return self._cities_object
+
+    def compare_city_name(self, name):
+        """
+        Метод сравнения названия города и установка флага, что город использован
+        """
+        for city_number in range(len(self._cities_object)):
+            city_obj = self._cities_object[city_number]
+            if (name.lower() == city_obj.name.lower()) and (not city_obj.is_used):
+                self._cities_object[city_number].is_used = True
+                return True
+        return False
 
 
 @dataclass
 class City:
     # Датакласс для представления города.
-    is_used: bool  # Флаг, указывающий, использован ли город в игре.
     name: str  # Название города.
     population: int  # Население города.
     subject: str  # Субъект федерации.
     district: str  # Район.
     latitude: float  # Широта.
     longitude: float  # Долгота.
+    is_used: bool = False  # Флаг, указывающий, использован ли город в игре.
 
 
 class CityGame:
     # Управляет логикой игры.
     def __init__(self, cities: CitiesSerializer):
-        self.cities_obj = cities
-        pass
+        self.city_obj = cities
 
     def start_game(self):  # Начинает игру, включая первый ход компьютера.
         pass
