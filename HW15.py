@@ -35,7 +35,7 @@ class JsonFile:
         '''
         with open(self.patch_file, 'w', encoding='utf-8') as file_json:
             try:
-                json.dump(file_json, data)
+                json.dump(data, file_json)
             except Exception as err:
                 print(err)
 
@@ -82,7 +82,7 @@ class CityGame:
         self.name_city_game = ''  # Название города для определения названия нового города
 
     def start_game(self):  # Начинает игру, включая первый ход компьютера.
-        self.name_city_game = 'А'
+        self.name_city_game = 'Абаза'
         self.human_turn_now = False
         return self.computer_turn()
 
