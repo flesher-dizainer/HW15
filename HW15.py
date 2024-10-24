@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 
 
@@ -46,10 +46,10 @@ class CitiesSerializer:
     '''
 
     def __init__(self, cities_data: list):
-        self._cities_object = [City(
+        self.cities_object: list[City] = [City(
             latitude=float(city_data.get('coords').get('lat', 0)),
             longitude=float(city_data.get('coords').get('lon', 0)),
-            name=city_data.get('name', ''),
+            name=city_data.get('name', '').capitalize(),
             population=city_data.get('population', 0),
             subject=city_data.get('subject', ''),
             district=city_data.get('district', '')
@@ -59,48 +59,62 @@ class CitiesSerializer:
         """
         метод возврата списка обьектов городов
         """
-        return self._cities_object
-
-    def compare_city_name(self, name):
-        """
-        Метод сравнения названия города и установка флага, что город использован
-        """
-        for city_number in range(len(self._cities_object)):
-            city_obj = self._cities_object[city_number]
-            if (name.lower() == city_obj.name.lower()) and (not city_obj.is_used):
-                self._cities_object[city_number].is_used = True
-                return True
-        return False
+        return self.cities_object
 
 
 @dataclass
 class City:
     # Датакласс для представления города.
-    name: str  # Название города.
-    population: int  # Население города.
-    subject: str  # Субъект федерации.
-    district: str  # Район.
-    latitude: float  # Широта.
-    longitude: float  # Долгота.
-    is_used: bool = False  # Флаг, указывающий, использован ли город в игре.
+    name: str = field(compare=True)  # Название города.
+    population: int = field(compare=False, default=0)  # Население города.
+    subject: str = field(compare=False, default='')  # Субъект федерации.
+    district: str = field(compare=False, default='')  # Район.
+    latitude: float = field(compare=False, default=0.0)  # Широта.
+    longitude: float = field(compare=False, default=0.0)  # Долгота.
+    is_used: bool = field(compare=True, default=False)  # Флаг, указывающий, использован ли город в игре.
 
 
 class CityGame:
     # Управляет логикой игры.
     def __init__(self, cities: CitiesSerializer):
         self.city_obj = cities
+        self.human_turn_now = False  # флаг показывающий ход игрока или компьютера
+        self.name_city_game = ''  # Название города для определения названия нового города
 
     def start_game(self):  # Начинает игру, включая первый ход компьютера.
-        pass
+        self.name_city_game = 'А'
+        self.human_turn_now = False
+        return self.computer_turn()
 
-    def human_turn(self, city_input):  # Обрабатывает ход человека.
-        pass
+    def human_turn(self):  # Обрабатывает ход человека.
+        name = self.name_city_game[-1].upper()
+        print(f'Ход Человека. Ищет слово на букву {name}')
+        human_city_name = input(
+            f'Введите название города которая начинается на букву {self.name_city_game[-1].upper()}:\n').capitalize()
+        human_city_obj = City(human_city_name)
+        print(f'Человек выбрал название города {human_city_name}')
+        return self.check_game_over(human_city_obj)
 
     def computer_turn(self):  # Выполняет ход компьютера.
-        pass
+        name = self.name_city_game[-1].upper()
+        print(f'Ход компьютера. Ищет слово на букву {name}')
+        for city in self.city_obj.cities_object:
+            if not city.is_used and (city.name[:1] == name):
+                print(f'Компьютер выбрал название города {city.name}')
+                computer_city_obj = City(city.name)
+                return self.check_game_over(computer_city_obj)
+        return False
 
-    def check_game_over(self):  # Проверяет завершение игры и определяет победителя.
-        pass
+    def check_game_over(self, obj_city):  # Проверяет завершение игры и определяет победителя.
+        if obj_city.name[0:1].lower() != self.name_city_game[-1].lower():
+            return False
+        for number_obj_city in range(len(self.city_obj.cities_object)):
+            if obj_city == self.city_obj.cities_object[number_obj_city]:
+                self.city_obj.cities_object[number_obj_city].is_used = True
+                self.human_turn_now = False if self.human_turn_now else True
+                self.name_city_game = self.city_obj.cities_object[number_obj_city].name.capitalize()
+                return True
+        return False
 
     def save_game_state(self):  # Сохраняет состояние игры, если необходимо.
         pass
@@ -115,13 +129,23 @@ class GameManager:
 
     def __call__(self):
         # Запускает игру, вызывая методы `start_game()`, `human_turn()`, и `computer_turn()` до завершения игры.
-        pass
+        if self.city_game.start_game():
+            result = True
+            while result:
+                if self.city_game.human_turn():
+                    if not self.city_game.computer_turn():
+                        result = False
+                else:
+                    result = False
+            if not result:
+                self.display_game_result()
 
     def run_game(self):  # Координирует выполнение игры.
         pass
 
     def display_game_result(self):  # Отображает результат игры после её завершения (опционально).
-        pass
+        name_gamer = 'Человек' if self.city_game.human_turn_now else 'Компьютер'
+        print(f'Игрок {name_gamer} проиграл')
 
 
 if __name__ == '__main__':
